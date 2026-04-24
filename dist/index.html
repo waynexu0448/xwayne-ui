@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>动物积木小游戏 - 5岁以下儿童</title>
+<style>
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    h1 {
+        color: white;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        margin-bottom: 5px;
+        font-size: 2.5em;
+    }
+    .subtitle {
+        color: rgba(255,255,255,0.9);
+        margin-bottom: 20px;
+        font-size: 1.2em;
+    }
+    .score-board {
+        background: rgba(255,255,255,0.95);
+        padding: 10px 30px;
+        border-radius: 50px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    .score { font-size: 1.5em; font-weight: bold; color: #667eea; }
+    .container {
+        width: 95%;
+        max-width: 700px;
+        text-align: center;
+    }
+    .hint {
+        color: rgba(255,255,255,0.95);
+        font-size: 1.3em;
+        margin-bottom: 25px;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    }
+    .blocks-area {
+        background: rgba(255,255,255,0.95);
+        padding: 25px;
+        border-radius: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    }
+    .blocks-label {
+        color: #764ba2;
+        font-weight: bold;
+        margin-bottom: 15px;
+        font-size: 1.1em;
+    }
+    .blocks {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    .block {
+        width: 90px;
+        height: 90px;
+        background: linear-gradient(145deg, #fff, #f0f0f0);
+        border-radius: 15px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        font-size: 55px;
+        line-height: 90px;
+        text-align: center;
+        cursor: grab;
+        user-select: none;
+        transition: transform 0.2s, box-shadow 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .block:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 15px rgba(0,0,0,0.25);
+    }
+    .block:active {
+        cursor: grabbing;
+        transform: scale(0.95);
+    }
+    .block.used {
+        opacity: 0.3;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+    .slots-area {
+        background: rgba(255,255,255,0.9);
+        padding: 25px;
+        border-radius: 20px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    }
+    .slots-label {
+        color: #667eea;
+        font-weight: bold;
+        margin-bottom: 15px;
+        font-size: 1.1em;
+    }
+    .slots {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    .slot {
+        width: 90px;
+        height: 90px;
+        border: 4px dashed rgba(102, 126, 234, 0.5);
+        border-radius: 15px;
+        background: rgba(102, 126, 234, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 40px;
+        transition: all 0.3s ease;
+    }
+    .slot.correct {
+        border-color: #4caf50;
+        border-style: solid;
+        background: rgba(76, 175, 80, 0.2);
+        animation: celebrate 0.6s ease-out;
+    }
+    .slot.wrong {
+        animation: shake 0.4s ease-in-out;
+    }
+    @keyframes celebrate {
+        0%   { transform: scale(1); }
+        30%  { transform: scale(1.2); }
+        60%  { transform: scale(0.9); }
+        100% { transform: scale(1); }
+    }
+    @keyframes shake {
+        0%   { transform: translateX(0); }
+        25%  { transform: translateX(-8px); }
+        50%  { transform: translateX(8px); }
+        75%  { transform: translateX(-8px); }
+        100% { transform: translateX(0); }
+    }
+    .success-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.7);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+    .success-modal.show { display: flex; }
+    .success-content {
+        background: white;
+        padding: 40px;
+        border-radius: 25px;
+        text-align: center;
+        animation: bounceIn 0.5s ease-out;
+    }
+    @keyframes bounceIn {
+        0% { transform: scale(0.5); opacity: 0; }
+        70% { transform: scale(1.1); }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    .success-emoji { font-size: 80px; margin-bottom: 15px; }
+    .success-text { font-size: 1.8em; color: #4caf50; font-weight: bold; margin-bottom: 10px; }
+    .success-sub { color: #666; margin-bottom: 20px; }
+    .play-again {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 15px 40px;
+        font-size: 1.2em;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    .play-again:hover { transform: scale(1.05); }
+    .decorations {
+        margin-top: 20px;
+        font-size: 2.5em;
+    }
+    .decorations span {
+        display: inline-block;
+        animation: float 2s ease-in-out infinite;
+    }
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+    footer {
+        margin-top: auto;
+        padding-top: 20px;
+        color: rgba(255,255,255,0.7);
+        font-size: 0.9em;
+    }
+</style>
+</head>
+<body>
+<h1>🎮 动物积木乐园 🎨</h1>
+<p class="subtitle">专为5岁以下儿童设计</p>
+
+<div class="score-board">
+    <span class="score">⭐ 得分: <span id="score">0</span></span>
+</div>
+
+<div class="container">
+    <p class="hint">👇 把动物积木拖到正确的位置 👇</p>
+    
+    <div class="blocks-area">
+        <p class="blocks-label">🎁 动物积木</p>
+        <div class="blocks" id="blocks">
+            <!-- 积木由JS生成 -->
+        </div>
+    </div>
+
+    <div class="slots-area">
+        <p class="slots-label">🏠 动物之家</p>
+        <div class="slots" id="slots">
+            <!-- 位置由JS生成 -->
+        </div>
+    </div>
+</div>
+
+<div class="decorations">
+    <span style="animation-delay: 0s">🌈</span>
+    <span style="animation-delay: 0.3s">⭐</span>
+    <span style="animation-delay: 0.6s">🎈</span>
+    <span style="animation-delay: 0.9s">🎁</span>
+    <span style="animation-delay: 1.2s">🦄</span>
+</div>
+
+<footer>
+    Made with ❤️ | Xwayne Agent Platform
+</footer>
+
+<!-- 成功弹窗 -->
+<div class="success-modal" id="successModal">
+    <div class="success-content">
+        <div class="success-emoji">🎉</div>
+        <p class="success-text">太棒了！</p>
+        <p class="success-sub">你已经完成了所有动物配对！</p>
+        <button class="play-again" onclick="resetGame()">再玩一次 🔄</button>
+    </div>
+</div>
+
+<script>
+const animals = [
+    { id: 'dog', emoji: '🐶', color: 'bg-orange-400' },
+    { id: 'cat', emoji: '🐱', color: 'bg-yellow-400' },
+    { id: 'rabbit', emoji: '🐰', color: 'bg-pink-300' },
+    { id: 'bear', emoji: '🐻', color: 'bg-amber-600' },
+    { id: 'pig', emoji: '🐷', color: 'bg-pink-400' }
+];
+
+let score = 0;
+let shuffledAnimals = [];
+
+// 初始化游戏
+function initGame() {
+    shuffledAnimals = [...animals].sort(() => Math.random() - 0.5);
+    const blocksContainer = document.getElementById('blocks');
+    const slotsContainer = document.getElementById('slots');
+    
+    blocksContainer.innerHTML = '';
+    slotsContainer.innerHTML = '';
+    
+    // 创建积木
+    shuffledAnimals.forEach(animal => {
+        const block = document.createElement('div');
+        block.className = 'block';
+        block.draggable = true;
+        block.dataset.animal = animal.id;
+        block.textContent = animal.emoji;
+        
+        block.addEventListener('dragstart', e => {
+            e.dataTransfer.setData('text/plain', animal.id);
+            block.style.opacity = '0.6';
+        });
+        block.addEventListener('dragend', e => {
+            block.style.opacity = '1';
+        });
+        
+        blocksContainer.appendChild(block);
+    });
+    
+    // 创建位置
+    const shuffledSlots = [...shuffledAnimals].sort(() => Math.random() - 0.5);
+    shuffledSlots.forEach(animal => {
+        const slot = document.createElement('div');
+        slot.className = 'slot';
+        slot.dataset.target = animal.id;
+        slot.textContent = '?';
+        
+        slot.addEventListener('dragover', e => e.preventDefault());
+        slot.addEventListener('drop', e => {
+            e.preventDefault();
+            const droppedAnimal = e.dataTransfer.getData('text/plain');
+            
+            if (droppedAnimal === animal.id && !slot.classList.contains('correct')) {
+                slot.textContent = animal.emoji;
+                slot.classList.add('correct');
+                score++;
+                document.getElementById('score').textContent = score;
+                
+                // 标记积木为已使用
+                const usedBlock = document.querySelector(`.block[data-animal="${droppedAnimal}"]`);
+                if (usedBlock) usedBlock.classList.add('used');
+                
+                // 检查是否全部完成
+                if (score === animals.length) {
+                    setTimeout(() => {
+                        document.getElementById('successModal').classList.add('show');
+                    }, 500);
+                }
+            } else if (!slot.classList.contains('correct')) {
+                slot.classList.add('wrong');
+                setTimeout(() => slot.classList.remove('wrong'), 400);
+            }
+        });
+        
+        slotsContainer.appendChild(slot);
+    });
+}
+
+function resetGame() {
+    score = 0;
+    document.getElementById('score').textContent = '0';
+    document.getElementById('successModal').classList.remove('show');
+    initGame();
+}
+
+// 触摸支持
+let touchedBlock = null;
+document.addEventListener('touchstart', e => {
+    if (e.target.classList.contains('block')) {
+        touchedBlock = e.target;
+    }
+});
+
+document.addEventListener('touchend', e => {
+    if (touchedBlock) {
+        const touch = e.changedTouches[0];
+        const slot = document.elementFromPoint(touch.clientX, touch.clientY);
+        
+        if (slot && slot.classList.contains('slot')) {
+            const animalId = touchedBlock.dataset.animal;
+            const targetId = slot.dataset.target;
+            
+            if (animalId === targetId && !slot.classList.contains('correct')) {
+                slot.textContent = animals.find(a => a.id === animalId).emoji;
+                slot.classList.add('correct');
+                score++;
+                document.getElementById('score').textContent = score;
+                touchedBlock.classList.add('used');
+                
+                if (score === animals.length) {
+                    setTimeout(() => {
+                        document.getElementById('successModal').classList.add('show');
+                    }, 500);
+                }
+            } else if (!slot.classList.contains('correct')) {
+                slot.classList.add('wrong');
+                setTimeout(() => slot.classList.remove('wrong'), 400);
+            }
+        }
+        touchedBlock = null;
+    }
+});
+
+// 启动游戏
+initGame();
+</script>
+</body>
+</html>
